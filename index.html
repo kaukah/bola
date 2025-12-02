@@ -464,7 +464,7 @@
         .empty-state {
             text-align: center;
             padding: 40px 20px;
-            color: #888;
+            color: #000;
             background-color: rgba(255, 255, 255, 0.7);
             border-radius: 10px;
         }
@@ -472,7 +472,7 @@
         .empty-state i {
             font-size: 48px;
             margin-bottom: 15px;
-            color: #ddd;
+            color: #000;
         }
 
         /* Modal for adding new category */
@@ -688,7 +688,7 @@
         </div>
         
         <div class="delete-mode-toggle">
-            <span class="delete-mode-label">Mode Hapus</span>
+            <span class="delete-mode-label">Hapus Bola</span>
             <label class="switch">
                 <input type="checkbox" id="deleteModeToggle">
                 <span class="slider"></span>
@@ -702,7 +702,7 @@
         
         <!-- Task Preview -->
         <div class="task-preview" id="taskPreview">
-            <div class="task-preview-header">Preview Tugas</div>
+            <div class="task-preview-header">Preview</div>
             <div id="previewContent">
                 <!-- Preview tasks will be added here dynamically -->
             </div>
@@ -710,7 +710,7 @@
         
         <!-- Quick add input -->
         <div class="quick-add-container" id="quickAddContainer">
-            <input type="text" class="quick-add-input" id="quickAddInput" placeholder="Nama kategori baru...">
+            <input type="text" class="quick-add-input" id="quickAddInput" placeholder="Kategori baru (klik Enter)">
             <button class="quick-add-button" id="quickAddButton">
                 <i class="fas fa-check"></i>
             </button>
@@ -731,7 +731,7 @@
         </div>
         <div class="task-container">
             <div class="task-input-container">
-                <input type="text" class="task-input" id="taskInput" placeholder="Tambahkan tugas baru...">
+                <input type="text" class="task-input" id="taskInput" placeholder="Ketik tugas baru... (Enter)">
                 <button class="add-task-button" id="addTaskBtn">
                     <i class="fas fa-plus"></i>
                 </button>
