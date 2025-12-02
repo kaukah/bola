@@ -1,0 +1,1639 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Colorful Todo List</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background-color: #f5f5f5;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        /* Category Page Styles */
+        .category-page {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            position: relative;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            overflow: hidden;
+        }
+
+        .datetime-container {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .time {
+            font-size: 24px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .date {
+            font-size: 16px;
+            color: #666;
+        }
+
+        .category-circle {
+            position: absolute;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-weight: 600;
+            cursor: move;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            text-align: center;
+            padding: 15px;
+            z-index: 10;
+            user-select: none;
+        }
+
+        .category-circle:hover {
+            transform: scale(1.05);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+            z-index: 20;
+        }
+
+        .category-circle.dragging {
+            opacity: 0.8;
+            transform: scale(1.1);
+            z-index: 100;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .category-percentage {
+            font-size: 0.8rem;
+            margin-bottom: 3px;
+            opacity: 0.9;
+            font-weight: 500;
+        }
+
+        .category-name {
+            font-size: 1.2rem;
+            margin-bottom: 5px;
+            width: 100%;
+            word-wrap: break-word;
+        }
+
+        .task-count {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            font-weight: 500;
+        }
+
+        .category-actions {
+            position: absolute;
+            top: -15px;
+            right: -15px;
+            display: none;
+            z-index: 30;
+        }
+
+        .category-actions.show {
+            display: block;
+        }
+
+        .delete-category-btn {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            transition: background-color 0.2s ease;
+        }
+
+        .delete-category-btn:hover {
+            background-color: #c0392b;
+        }
+
+        .add-category {
+            position: absolute;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            background-color: #3498db;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.3s ease;
+            z-index: 100;
+        }
+
+        .add-category:hover {
+            background-color: #2980b9;
+        }
+
+        /* Delete Mode Toggle */
+        .delete-mode-toggle {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            align-items: center;
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 8px 15px;
+            border-radius: 30px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            z-index: 100;
+        }
+
+        .delete-mode-label {
+            margin-right: 10px;
+            font-size: 14px;
+            color: #333;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 24px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: #e74c3c;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+
+        /* Task Preview */
+        .task-preview {
+            position: absolute;
+            background-color: white;
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            width: 250px;
+            max-height: 300px;
+            overflow-y: auto;
+            display: none;
+            z-index: 100;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .task-preview.show {
+            display: block;
+            opacity: 1;
+        }
+
+        .task-preview-header {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #333;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 8px;
+        }
+
+        .preview-task-item {
+            display: flex;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .preview-task-item:last-child {
+            border-bottom: none;
+        }
+
+        .preview-task-checkbox {
+            width: 16px;
+            height: 16px;
+            margin-right: 10px;
+            cursor: pointer;
+        }
+
+        .preview-task-text {
+            flex: 1;
+            font-size: 14px;
+            color: #555;
+        }
+
+        .preview-task-text.completed {
+            text-decoration: line-through;
+            color: #888;
+        }
+
+        .preview-empty {
+            text-align: center;
+            padding: 20px 0;
+            color: #888;
+            font-size: 14px;
+        }
+
+        /* Task Page Styles */
+        .task-page {
+            display: none;
+            flex-direction: column;
+            height: 100vh;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .task-background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .task-background.active {
+            opacity: 1;
+            animation: zoomIn 0.3s ease forwards;
+        }
+
+        @keyframes zoomIn {
+            0% {
+                transform: scale(0.1);
+                border-radius: 50%;
+            }
+            100% {
+                transform: scale(1);
+                border-radius: 0;
+            }
+        }
+
+        .task-header {
+            padding: 20px;
+            background-color: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 10;
+            cursor: pointer;
+        }
+
+        .back-button {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #555;
+            padding: 5px 10px;
+            border-radius: 5px;
+            transition: background-color 0.2s ease;
+        }
+
+        .back-button:hover {
+            background-color: rgba(0, 0, 0, 0.05);
+        }
+
+        .category-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .change-color-btn {
+            background: none;
+            border: none;
+            color: #555;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 50%;
+            transition: background-color 0.2s ease;
+        }
+
+        .change-color-btn:hover {
+            background-color: rgba(0, 0, 0, 0.05);
+        }
+
+        .task-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            z-index: 10;
+        }
+
+        .task-input-container {
+            display: flex;
+            margin-bottom: 20px;
+        }
+
+        .task-input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 30px;
+            font-size: 16px;
+            outline: none;
+            background-color: rgba(255, 255, 255, 0.9);
+        }
+
+        .add-task-button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 45px;
+            height: 45px;
+            margin-left: 10px;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 18px;
+            transition: background-color 0.3s ease;
+        }
+
+        .add-task-button:hover {
+            background-color: #2980b9;
+        }
+
+        .task-list {
+            list-style: none;
+        }
+
+        .task-item {
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+            transition: transform 0.2s ease;
+        }
+
+        .task-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .task-checkbox {
+            width: 20px;
+            height: 20px;
+            margin-right: 15px;
+            cursor: pointer;
+        }
+
+        .task-text {
+            flex: 1;
+            font-size: 16px;
+        }
+
+        .task-text.completed {
+            text-decoration: line-through;
+            color: #888;
+        }
+
+        .delete-task {
+            background: none;
+            border: none;
+            color: #e74c3c;
+            cursor: pointer;
+            font-size: 18px;
+            padding: 5px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #888;
+            background-color: rgba(255, 255, 255, 0.7);
+            border-radius: 10px;
+        }
+
+        .empty-state i {
+            font-size: 48px;
+            margin-bottom: 15px;
+            color: #ddd;
+        }
+
+        /* Modal for adding new category */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .modal-header {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .modal-input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            font-size: 16px;
+        }
+
+        .color-options {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .color-option {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 3px solid transparent;
+            transition: border 0.2s ease;
+        }
+
+        .color-option.selected {
+            border-color: #333;
+        }
+
+        .modal-buttons {
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .modal-button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+
+        .cancel-button {
+            background-color: #ddd;
+            color: #333;
+        }
+
+        .save-button {
+            background-color: #3498db;
+            color: white;
+        }
+
+        /* Delete Confirmation Modal */
+        .delete-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .delete-modal-content {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            text-align: center;
+        }
+
+        .delete-modal-header {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .delete-modal-text {
+            margin-bottom: 30px;
+            color: #666;
+        }
+
+        .delete-modal-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .delete-modal-button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .cancel-delete-button {
+            background-color: #ddd;
+            color: #333;
+        }
+
+        .confirm-delete-button {
+            background-color: #e74c3c;
+            color: white;
+        }
+
+        /* Notification */
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #333;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 30px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            display: none;
+            z-index: 1001;
+        }
+
+        /* Quick add input */
+        .quick-add-container {
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: white;
+            border-radius: 30px;
+            padding: 5px;
+            display: none;
+            align-items: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            z-index: 100;
+            width: 80%;
+            max-width: 400px;
+        }
+
+        .quick-add-input {
+            flex: 1;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 30px;
+            font-size: 16px;
+            outline: none;
+        }
+
+        .quick-add-button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            margin-left: 5px;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+        }
+
+        .quick-add-button:hover {
+            background-color: #2980b9;
+        }
+    </style>
+</head>
+<body>
+    <!-- Category Page -->
+    <div class="category-page" id="categoryPage">
+        <div class="datetime-container">
+            <div class="time" id="time">00:00</div>
+            <div class="date" id="date">DAY DD MMM</div>
+        </div>
+        
+        <div class="delete-mode-toggle">
+            <span class="delete-mode-label">Mode Hapus</span>
+            <label class="switch">
+                <input type="checkbox" id="deleteModeToggle">
+                <span class="slider"></span>
+            </label>
+        </div>
+        
+        <!-- Category circles will be added dynamically -->
+        <div class="add-category" id="addCategoryBtn">
+            <i class="fas fa-plus"></i>
+        </div>
+        
+        <!-- Task Preview -->
+        <div class="task-preview" id="taskPreview">
+            <div class="task-preview-header">Preview Tugas</div>
+            <div id="previewContent">
+                <!-- Preview tasks will be added here dynamically -->
+            </div>
+        </div>
+        
+        <!-- Quick add input -->
+        <div class="quick-add-container" id="quickAddContainer">
+            <input type="text" class="quick-add-input" id="quickAddInput" placeholder="Nama kategori baru...">
+            <button class="quick-add-button" id="quickAddButton">
+                <i class="fas fa-check"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Task Page -->
+    <div class="task-page" id="taskPage">
+        <div class="task-background" id="taskBackground"></div>
+        <div class="task-header" id="taskHeader">
+            <button class="back-button" id="backButton">
+                <i class="fas fa-arrow-left"></i>
+            </button>
+            <h1 class="category-title" id="categoryTitle">KATEGORI</h1>
+            <button class="change-color-btn" id="changeColorBtn" title="Ubah Warna Kategori">
+                <i class="fas fa-palette"></i>
+            </button>
+        </div>
+        <div class="task-container">
+            <div class="task-input-container">
+                <input type="text" class="task-input" id="taskInput" placeholder="Tambahkan tugas baru...">
+                <button class="add-task-button" id="addTaskBtn">
+                    <i class="fas fa-plus"></i>
+                </button>
+            </div>
+            <ul class="task-list" id="taskList">
+                <!-- Tasks will be added here dynamically -->
+            </ul>
+            <div class="empty-state" id="emptyState">
+                <i class="fas fa-clipboard-list"></i>
+                <p>Belum ada tugas. Tambahkan tugas baru!</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for adding new category -->
+    <div class="modal" id="categoryModal">
+        <div class="modal-content">
+            <div class="modal-header">Tambah Kategori Baru</div>
+            <input type="text" class="modal-input" id="categoryNameInput" placeholder="Nama kategori">
+            <div class="color-options">
+                <div class="color-option" style="background-color: #8e44ad;" data-color="purple"></div>
+                <div class="color-option" style="background-color: #27ae60;" data-color="green"></div>
+                <div class="color-option" style="background-color: #e74c3c;" data-color="red"></div>
+                <div class="color-option" style="background-color: #f39c12;" data-color="orange"></div>
+                <div class="color-option" style="background-color: #3498db;" data-color="blue"></div>
+                <div class="color-option" style="background-color: #9b59b6;" data-color="violet"></div>
+            </div>
+            <div class="modal-buttons">
+                <button class="modal-button cancel-button" id="cancelCategoryBtn">Batal</button>
+                <button class="modal-button save-button" id="saveCategoryBtn">Simpan</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for changing category color -->
+    <div class="modal" id="changeColorModal">
+        <div class="modal-content">
+            <div class="modal-header">Ubah Warna Kategori</div>
+            <div class="color-options">
+                <div class="color-option" style="background-color: #8e44ad;" data-color="purple"></div>
+                <div class="color-option" style="background-color: #27ae60;" data-color="green"></div>
+                <div class="color-option" style="background-color: #e74c3c;" data-color="red"></div>
+                <div class="color-option" style="background-color: #f39c12;" data-color="orange"></div>
+                <div class="color-option" style="background-color: #3498db;" data-color="blue"></div>
+                <div class="color-option" style="background-color: #9b59b6;" data-color="violet"></div>
+            </div>
+            <div class="modal-buttons">
+                <button class="modal-button cancel-button" id="cancelChangeColorBtn">Batal</button>
+                <button class="modal-button save-button" id="saveChangeColorBtn">Simpan</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="delete-modal" id="deleteModal">
+        <div class="delete-modal-content">
+            <div class="delete-modal-header">Hapus Kategori</div>
+            <div class="delete-modal-text" id="deleteModalText">
+                Apakah Anda yakin ingin menghapus kategori ini? Semua tugas di dalamnya juga akan dihapus.
+            </div>
+            <div class="delete-modal-buttons">
+                <button class="delete-modal-button cancel-delete-button" id="cancelDeleteBtn">Batal</button>
+                <button class="delete-modal-button confirm-delete-button" id="confirmDeleteBtn">Hapus</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification -->
+    <div class="notification" id="notification"></div>
+
+    <script>
+        // DOM Elements
+        const categoryPage = document.getElementById('categoryPage');
+        const taskPage = document.getElementById('taskPage');
+        const taskHeader = document.getElementById('taskHeader');
+        const categoryTitle = document.getElementById('categoryTitle');
+        const backButton = document.getElementById('backButton');
+        const taskInput = document.getElementById('taskInput');
+        const addTaskBtn = document.getElementById('addTaskBtn');
+        const taskList = document.getElementById('taskList');
+        const emptyState = document.getElementById('emptyState');
+        const addCategoryBtn = document.getElementById('addCategoryBtn');
+        const categoryModal = document.getElementById('categoryModal');
+        const categoryNameInput = document.getElementById('categoryNameInput');
+        const colorOptions = document.querySelectorAll('.color-option');
+        const cancelCategoryBtn = document.getElementById('cancelCategoryBtn');
+        const saveCategoryBtn = document.getElementById('saveCategoryBtn');
+        const notification = document.getElementById('notification');
+        const timeElement = document.getElementById('time');
+        const dateElement = document.getElementById('date');
+        const taskBackground = document.getElementById('taskBackground');
+        const quickAddContainer = document.getElementById('quickAddContainer');
+        const quickAddInput = document.getElementById('quickAddInput');
+        const quickAddButton = document.getElementById('quickAddButton');
+        const changeColorModal = document.getElementById('changeColorModal');
+        const cancelChangeColorBtn = document.getElementById('cancelChangeColorBtn');
+        const saveChangeColorBtn = document.getElementById('saveChangeColorBtn');
+        const changeColorBtn = document.getElementById('changeColorBtn');
+        const deleteModeToggle = document.getElementById('deleteModeToggle');
+        const deleteModal = document.getElementById('deleteModal');
+        const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
+        const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+        const deleteModalText = document.getElementById('deleteModalText');
+        const taskPreview = document.getElementById('taskPreview');
+        const previewContent = document.getElementById('previewContent');
+
+        // State
+        let currentCategory = '';
+        let currentColor = '';
+        let selectedColor = '';
+        let selectedCategoryForColorChange = '';
+        let selectedCategoryForDelete = '';
+        let tasks = {};
+        let categories = [];
+        let hoverTimer = null;
+        let currentHoveredCategory = null;
+        let draggedElement = null;
+        let offsetX = 0;
+        let offsetY = 0;
+        let isDragging = false;
+        let dragThreshold = 5; // Minimum distance to consider as drag
+
+        // Color mapping
+        const colorMap = {
+            'purple': '#8e44ad',
+            'green': '#27ae60',
+            'red': '#e74c3c',
+            'orange': '#f39c12',
+            'blue': '#3498db',
+            'violet': '#9b59b6'
+        };
+
+        // Available colors for random selection
+        const availableColors = ['purple', 'green', 'red', 'orange', 'blue', 'violet'];
+
+        // Initialize tasks from localStorage
+        function initTasks() {
+            const savedTasks = localStorage.getItem('tasks');
+            const savedCategories = localStorage.getItem('categories');
+            const savedPositions = localStorage.getItem('positions');
+            
+            if (savedTasks) {
+                tasks = JSON.parse(savedTasks);
+            } else {
+                // Initialize with empty tasks for default categories
+                tasks = {
+                    'KATEGORI 1': [],
+                    'KATEGORI 2': [],
+                    'KATEGORI 3': [],
+                    'KATEGORI 4': []
+                };
+                saveTasks();
+            }
+            
+            if (savedCategories) {
+                categories = JSON.parse(savedCategories);
+            } else {
+                // Initialize with default categories
+                categories = [
+                    { name: 'KATEGORI 1', color: 'purple' },
+                    { name: 'KATEGORI 3', color: 'green' },
+                    { name: 'KATEGORI 2', color: 'red' },
+                    { name: 'KATEGORI 4', color: 'orange' }
+                ];
+                saveCategories();
+            }
+            
+            renderCategories();
+            updateDateTime();
+            setInterval(updateDateTime, 1000);
+        }
+
+        // Update date and time
+        function updateDateTime() {
+            const now = new Date();
+            
+            // Format time in 12-hour format with AM/PM
+            let hours = now.getHours();
+            const minutes = now.getMinutes().toString().padStart(2, '0');
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            hours = hours % 12;
+            hours = hours ? hours : 12; // the hour '0' should be '12'
+            
+            timeElement.textContent = `${hours}:${minutes} ${ampm}`;
+            
+            // Format date
+            const days = ['MINGGU', 'SENIN', 'SELASA', 'RABU', 'KAMIS', 'JUMAT', 'SABTU'];
+            const months = ['JAN', 'FEB', 'MAR', 'APR', 'MEI', 'JUN', 'JUL', 'AGU', 'SEP', 'OKT', 'NOV', 'DES'];
+            
+            const dayName = days[now.getDay()];
+            const date = now.getDate();
+            const monthName = months[now.getMonth()];
+            
+            dateElement.textContent = `${dayName} ${date} ${monthName}`;
+        }
+
+        // Save tasks to localStorage
+        function saveTasks() {
+            localStorage.setItem('tasks', JSON.stringify(tasks));
+        }
+
+        // Save categories to localStorage
+        function saveCategories() {
+            localStorage.setItem('categories', JSON.stringify(categories));
+        }
+
+        // Save positions to localStorage
+        function savePositions() {
+            const positions = {};
+            document.querySelectorAll('.category-circle').forEach(circle => {
+                const categoryName = circle.getAttribute('data-category');
+                positions[categoryName] = {
+                    x: parseFloat(circle.style.left),
+                    y: parseFloat(circle.style.top)
+                };
+            });
+            localStorage.setItem('positions', JSON.stringify(positions));
+        }
+
+        // Show notification
+        function showNotification(message) {
+            notification.textContent = message;
+            notification.style.display = 'block';
+            
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 3000);
+        }
+
+        // Get random color
+        function getRandomColor() {
+            return availableColors[Math.floor(Math.random() * availableColors.length)];
+        }
+
+        // Render categories
+        function renderCategories() {
+            // Clear existing categories (except add button)
+            const existingCircles = categoryPage.querySelectorAll('.category-circle');
+            existingCircles.forEach(circle => circle.remove());
+            
+            // Get saved positions
+            const savedPositions = localStorage.getItem('positions');
+            let positions = {};
+            if (savedPositions) {
+                positions = JSON.parse(savedPositions);
+            }
+            
+            // Create category circles
+            categories.forEach((category, index) => {
+                const circle = document.createElement('div');
+                const taskCount = tasks[category.name] ? tasks[category.name].length : 0;
+                const completedCount = tasks[category.name] ? 
+                    tasks[category.name].filter(task => task.completed).length : 0;
+                
+                // Calculate percentage
+                const percentage = taskCount > 0 ? Math.round((completedCount / taskCount) * 100) : 0;
+                
+                // Calculate size based on task count (min 150px, max 250px)
+                const size = Math.min(250, Math.max(150, 150 + (taskCount * 3)));
+                
+                circle.className = `category-circle ${category.color}`;
+                circle.setAttribute('data-category', category.name);
+                circle.setAttribute('data-color', category.color);
+                circle.style.width = `${size}px`;
+                circle.style.height = `${size}px`;
+                circle.style.backgroundColor = colorMap[category.color];
+                
+                // Set position - use saved position if available, otherwise calculate
+                if (positions[category.name]) {
+                    circle.style.left = `${positions[category.name].x}%`;
+                    circle.style.top = `${positions[category.name].y}%`;
+                } else {
+                    // Calculate position if not saved
+                    const position = calculateRandomPosition();
+                    circle.style.left = `${position.x}%`;
+                    circle.style.top = `${position.y}%`;
+                }
+                
+                // Percentage
+                const percentageDiv = document.createElement('div');
+                percentageDiv.className = 'category-percentage';
+                percentageDiv.textContent = `${percentage}%`;
+                
+                // Category name
+                const nameDiv = document.createElement('div');
+                nameDiv.className = 'category-name';
+                nameDiv.textContent = category.name;
+                
+                // Task count
+                const countDiv = document.createElement('div');
+                countDiv.className = 'task-count';
+                countDiv.textContent = `${completedCount}/${taskCount}`;
+                
+                // Delete button (only shown in delete mode)
+                const actionsDiv = document.createElement('div');
+                actionsDiv.className = 'category-actions';
+                if (deleteModeToggle.checked) {
+                    actionsDiv.classList.add('show');
+                }
+                
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'delete-category-btn';
+                deleteBtn.innerHTML = '<i class="fas fa-times"></i>';
+                deleteBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    deleteCategory(category.name);
+                });
+                
+                actionsDiv.appendChild(deleteBtn);
+                
+                circle.appendChild(percentageDiv);
+                circle.appendChild(nameDiv);
+                circle.appendChild(countDiv);
+                circle.appendChild(actionsDiv);
+                
+                // Add hover events for preview
+                circle.addEventListener('mouseenter', function() {
+                    startHoverTimer(category.name);
+                });
+                
+                circle.addEventListener('mouseleave', function() {
+                    stopHoverTimer();
+                });
+                
+                // Add click event
+                circle.addEventListener('click', function(e) {
+                    // Only trigger click if not dragging
+                    if (!isDragging) {
+                        currentCategory = this.getAttribute('data-category');
+                        currentColor = this.getAttribute('data-color');
+                        categoryTitle.textContent = currentCategory;
+                        categoryTitle.style.color = colorMap[currentColor];
+                        
+                        // Set background color for task page
+                        taskBackground.style.backgroundColor = colorMap[currentColor];
+                        
+                        categoryPage.style.display = 'none';
+                        taskPage.style.display = 'flex';
+                        
+                        // Trigger animation
+                        setTimeout(() => {
+                            taskBackground.classList.add('active');
+                        }, 10);
+                        
+                        loadTasks();
+                    }
+                });
+                
+                // Add drag events
+                circle.addEventListener('mousedown', startDrag);
+                
+                categoryPage.appendChild(circle);
+            });
+        }
+
+        // Calculate random position for a category
+        function calculateRandomPosition() {
+            // Generate random position with margins
+            return {
+                x: Math.random() * 60 + 20, // 20% to 80%
+                y: Math.random() * 60 + 20  // 20% to 80%
+            };
+        }
+
+        // Start hover timer for task preview
+        function startHoverTimer(categoryName) {
+            currentHoveredCategory = categoryName;
+            
+            // Clear any existing timer
+            if (hoverTimer) {
+                clearTimeout(hoverTimer);
+            }
+            
+            // Set new timer
+            hoverTimer = setTimeout(() => {
+                showTaskPreview(categoryName);
+            }, 1500); // Show preview after 1.5 seconds
+        }
+
+        // Stop hover timer
+        function stopHoverTimer() {
+            if (hoverTimer) {
+                clearTimeout(hoverTimer);
+                hoverTimer = null;
+            }
+            
+            // Hide preview
+            taskPreview.classList.remove('show');
+        }
+
+        // Show task preview
+        function showTaskPreview(categoryName) {
+            const categoryTasks = tasks[categoryName] || [];
+            
+            // Clear previous content
+            previewContent.innerHTML = '';
+            
+            if (categoryTasks.length === 0) {
+                previewContent.innerHTML = '<div class="preview-empty">Belum ada tugas</div>';
+            } else {
+                categoryTasks.forEach(task => {
+                    const taskItem = document.createElement('div');
+                    taskItem.className = 'preview-task-item';
+                    
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.className = 'preview-task-checkbox';
+                    checkbox.checked = task.completed;
+                    checkbox.disabled = true; // Disable interaction in preview
+                    
+                    const taskText = document.createElement('div');
+                    taskText.className = 'preview-task-text';
+                    if (task.completed) {
+                        taskText.classList.add('completed');
+                    }
+                    taskText.textContent = task.text;
+                    
+                    taskItem.appendChild(checkbox);
+                    taskItem.appendChild(taskText);
+                    previewContent.appendChild(taskItem);
+                });
+            }
+            
+            // Position preview near the cursor or category
+            const circle = document.querySelector(`[data-category="${categoryName}"]`);
+            if (circle) {
+                const rect = circle.getBoundingClientRect();
+                const previewWidth = 250;
+                
+                // Position to the right of the circle if there's space, otherwise to the left
+                let left = rect.right + 10;
+                if (left + previewWidth > window.innerWidth) {
+                    left = rect.left - previewWidth - 10;
+                }
+                
+                // Center vertically with the circle
+                let top = rect.top + (rect.height / 2) - 150; // 150 is approx half of preview height
+                
+                // Ensure preview stays within viewport
+                top = Math.max(10, Math.min(window.innerHeight - 310, top));
+                
+                taskPreview.style.left = `${left}px`;
+                taskPreview.style.top = `${top}px`;
+            }
+            
+            // Show preview
+            taskPreview.classList.add('show');
+        }
+
+        // Drag functions
+        function startDrag(e) {
+            draggedElement = e.currentTarget;
+            draggedElement.classList.add('dragging');
+            
+            const rect = draggedElement.getBoundingClientRect();
+            offsetX = e.clientX - rect.left;
+            offsetY = e.clientY - rect.top;
+            
+            // Reset drag state
+            isDragging = false;
+            
+            document.addEventListener('mousemove', drag);
+            document.addEventListener('mouseup', stopDrag);
+            
+            e.preventDefault();
+        }
+
+        function drag(e) {
+            if (!draggedElement) return;
+            
+            // Check if we've moved enough to consider this a drag
+            const distance = Math.sqrt(
+                Math.pow(e.clientX - (offsetX + draggedElement.getBoundingClientRect().left), 2) +
+                Math.pow(e.clientY - (offsetY + draggedElement.getBoundingClientRect().top), 2)
+            );
+            
+            if (distance > dragThreshold) {
+                isDragging = true;
+            }
+            
+            const containerRect = categoryPage.getBoundingClientRect();
+            
+            // Calculate position as percentage
+            let x = ((e.clientX - containerRect.left - offsetX) / containerRect.width) * 100;
+            let y = ((e.clientY - containerRect.top - offsetY) / containerRect.height) * 100;
+            
+            // Constrain to container
+            const elementWidth = (draggedElement.offsetWidth / containerRect.width) * 100;
+            const elementHeight = (draggedElement.offsetHeight / containerRect.height) * 100;
+            
+            x = Math.max(0, Math.min(100 - elementWidth, x));
+            y = Math.max(0, Math.min(100 - elementHeight, y));
+            
+            draggedElement.style.left = `${x}%`;
+            draggedElement.style.top = `${y}%`;
+            
+            // Check for collisions and adjust position
+            checkCollisions(draggedElement);
+        }
+
+        function stopDrag() {
+            if (draggedElement) {
+                draggedElement.classList.remove('dragging');
+                savePositions();
+                draggedElement = null;
+                
+                // Reset drag state after a short delay to prevent click event
+                setTimeout(() => {
+                    isDragging = false;
+                }, 100);
+            }
+            
+            document.removeEventListener('mousemove', drag);
+            document.removeEventListener('mouseup', stopDrag);
+        }
+
+        // Check for collisions with other circles
+        function checkCollisions(draggedCircle) {
+            const draggedRect = draggedCircle.getBoundingClientRect();
+            const draggedCenterX = draggedRect.left + draggedRect.width / 2;
+            const draggedCenterY = draggedRect.top + draggedRect.height / 2;
+            const draggedRadius = draggedRect.width / 2;
+            
+            const allCircles = document.querySelectorAll('.category-circle');
+            
+            allCircles.forEach(circle => {
+                if (circle === draggedCircle) return;
+                
+                const rect = circle.getBoundingClientRect();
+                const centerX = rect.left + rect.width / 2;
+                const centerY = rect.top + rect.height / 2;
+                const radius = rect.width / 2;
+                
+                // Calculate distance between centers
+                const dx = draggedCenterX - centerX;
+                const dy = draggedCenterY - centerY;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                // Check if circles are overlapping
+                const minDistance = draggedRadius + radius + 15; // Add 15px margin
+                
+                if (distance < minDistance) {
+                    // Calculate overlap
+                    const overlap = minDistance - distance;
+                    
+                    // Calculate direction vector
+                    const directionX = dx / distance;
+                    const directionY = dy / distance;
+                    
+                    // Move dragged circle away
+                    const containerRect = categoryPage.getBoundingClientRect();
+                    const newX = ((draggedRect.left + directionX * overlap - containerRect.left) / containerRect.width) * 100;
+                    const newY = ((draggedRect.top + directionY * overlap - containerRect.top) / containerRect.height) * 100;
+                    
+                    // Constrain to container
+                    const elementWidth = (draggedCircle.offsetWidth / containerRect.width) * 100;
+                    const elementHeight = (draggedCircle.offsetHeight / containerRect.height) * 100;
+                    
+                    draggedCircle.style.left = `${Math.max(0, Math.min(100 - elementWidth, newX))}%`;
+                    draggedCircle.style.top = `${Math.max(0, Math.min(100 - elementHeight, newY))}%`;
+                }
+            });
+        }
+
+        // Delete category
+        function deleteCategory(categoryName) {
+            selectedCategoryForDelete = categoryName;
+            deleteModalText.textContent = `Apakah Anda yakin ingin menghapus kategori "${categoryName}"? Semua tugas di dalamnya juga akan dihapus.`;
+            deleteModal.style.display = 'flex';
+        }
+
+        // Open change color modal
+        function openChangeColorModal(categoryName, currentColor) {
+            selectedCategoryForColorChange = categoryName;
+            selectedColor = currentColor;
+            
+            // Update UI to show selected color
+            colorOptions.forEach(option => {
+                option.classList.remove('selected');
+                if (option.getAttribute('data-color') === currentColor) {
+                    option.classList.add('selected');
+                }
+            });
+            
+            changeColorModal.style.display = 'flex';
+        }
+
+        // Task header click event (back to categories)
+        taskHeader.addEventListener('click', function() {
+            taskBackground.classList.remove('active');
+            
+            setTimeout(() => {
+                taskPage.style.display = 'none';
+                categoryPage.style.display = 'flex';
+                renderCategories(); // Refresh categories to update task counts
+            }, 300);
+        });
+
+        // Back button click event
+        backButton.addEventListener('click', function(e) {
+            e.stopPropagation(); // Prevent event bubbling to header
+            taskBackground.classList.remove('active');
+            
+            setTimeout(() => {
+                taskPage.style.display = 'none';
+                categoryPage.style.display = 'flex';
+                renderCategories(); // Refresh categories to update task counts
+            }, 300);
+        });
+
+        // Add task button click event
+        addTaskBtn.addEventListener('click', addTask);
+
+        // Enter key in task input
+        taskInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                addTask();
+            }
+        });
+
+        // Add task function
+        function addTask() {
+            const taskText = taskInput.value.trim();
+            if (taskText === '') {
+                showNotification('Tugas tidak boleh kosong!');
+                return;
+            }
+
+            if (!tasks[currentCategory]) {
+                tasks[currentCategory] = [];
+            }
+
+            const newTask = {
+                id: Date.now(),
+                text: taskText,
+                completed: false
+            };
+
+            tasks[currentCategory].push(newTask);
+            saveTasks();
+            renderTasks();
+            taskInput.value = '';
+            showNotification('Tugas berhasil ditambahkan!');
+        }
+
+        // Load tasks for current category
+        function loadTasks() {
+            renderTasks();
+        }
+
+        // Render tasks
+        function renderTasks() {
+            taskList.innerHTML = '';
+            
+            if (!tasks[currentCategory] || tasks[currentCategory].length === 0) {
+                emptyState.style.display = 'block';
+                return;
+            }
+            
+            emptyState.style.display = 'none';
+            
+            tasks[currentCategory].forEach(task => {
+                const li = document.createElement('li');
+                li.className = 'task-item';
+                
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.className = 'task-checkbox';
+                checkbox.checked = task.completed;
+                checkbox.addEventListener('change', function() {
+                    toggleTask(task.id);
+                });
+                
+                const span = document.createElement('span');
+                span.className = 'task-text';
+                if (task.completed) {
+                    span.classList.add('completed');
+                }
+                span.textContent = task.text;
+                
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'delete-task';
+                deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
+                deleteBtn.addEventListener('click', function() {
+                    deleteTask(task.id);
+                });
+                
+                li.appendChild(checkbox);
+                li.appendChild(span);
+                li.appendChild(deleteBtn);
+                taskList.appendChild(li);
+            });
+        }
+
+        // Toggle task completion
+        function toggleTask(taskId) {
+            const taskIndex = tasks[currentCategory].findIndex(task => task.id === taskId);
+            if (taskIndex !== -1) {
+                tasks[currentCategory][taskIndex].completed = !tasks[currentCategory][taskIndex].completed;
+                saveTasks();
+                renderTasks();
+            }
+        }
+
+        // Delete task
+        function deleteTask(taskId) {
+            tasks[currentCategory] = tasks[currentCategory].filter(task => task.id !== taskId);
+            saveTasks();
+            renderTasks();
+            showNotification('Tugas berhasil dihapus!');
+        }
+
+        // Add category button click event
+        addCategoryBtn.addEventListener('click', function() {
+            // Show quick add input
+            quickAddContainer.style.display = 'flex';
+            quickAddInput.value = '';
+            quickAddInput.focus();
+        });
+
+        // Quick add button click event
+        quickAddButton.addEventListener('click', quickAddCategory);
+
+        // Enter key in quick add input
+        quickAddInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                quickAddCategory();
+            }
+        });
+
+        // Quick add category function
+        function quickAddCategory() {
+            const categoryName = quickAddInput.value.trim();
+            if (categoryName === '') {
+                showNotification('Nama kategori tidak boleh kosong!');
+                return;
+            }
+
+            // Get random color
+            const randomColor = getRandomColor();
+            
+            // Add new category
+            categories.push({
+                name: categoryName,
+                color: randomColor
+            });
+            
+            // Initialize tasks for new category
+            if (!tasks[categoryName]) {
+                tasks[categoryName] = [];
+                saveTasks();
+            }
+            
+            saveCategories();
+            renderCategories();
+            
+            // Hide quick add input
+            quickAddContainer.style.display = 'none';
+            
+            showNotification('Kategori berhasil ditambahkan!');
+        }
+
+        // Delete mode toggle change event
+        deleteModeToggle.addEventListener('change', function() {
+            const deleteButtons = document.querySelectorAll('.category-actions');
+            deleteButtons.forEach(button => {
+                if (this.checked) {
+                    button.classList.add('show');
+                } else {
+                    button.classList.remove('show');
+                }
+            });
+        });
+
+        // Change color button click event
+        changeColorBtn.addEventListener('click', function(e) {
+            e.stopPropagation(); // Prevent event bubbling to header
+            openChangeColorModal(currentCategory, currentColor);
+        });
+
+        // Color option click event for add category modal
+        document.querySelectorAll('#categoryModal .color-option').forEach(option => {
+            option.addEventListener('click', function() {
+                document.querySelectorAll('#categoryModal .color-option').forEach(opt => opt.classList.remove('selected'));
+                this.classList.add('selected');
+                selectedColor = this.getAttribute('data-color');
+            });
+        });
+
+        // Color option click event for change color modal
+        document.querySelectorAll('#changeColorModal .color-option').forEach(option => {
+            option.addEventListener('click', function() {
+                document.querySelectorAll('#changeColorModal .color-option').forEach(opt => opt.classList.remove('selected'));
+                this.classList.add('selected');
+                selectedColor = this.getAttribute('data-color');
+            });
+        });
+
+        // Cancel category button click event
+        cancelCategoryBtn.addEventListener('click', function() {
+            categoryModal.style.display = 'none';
+        });
+
+        // Save category button click event
+        saveCategoryBtn.addEventListener('click', saveCategory);
+
+        // Enter key in category name input
+        categoryNameInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                saveCategory();
+            }
+        });
+
+        // Save category function
+        function saveCategory() {
+            const categoryName = categoryNameInput.value.trim();
+            if (categoryName === '') {
+                showNotification('Nama kategori tidak boleh kosong!');
+                return;
+            }
+
+            // Add new category
+            categories.push({
+                name: categoryName,
+                color: selectedColor
+            });
+            
+            // Initialize tasks for new category
+            if (!tasks[categoryName]) {
+                tasks[categoryName] = [];
+                saveTasks();
+            }
+            
+            saveCategories();
+            renderCategories();
+            
+            // Close modal
+            categoryModal.style.display = 'none';
+            showNotification('Kategori berhasil ditambahkan!');
+        }
+
+        // Cancel change color button click event
+        cancelChangeColorBtn.addEventListener('click', function() {
+            changeColorModal.style.display = 'none';
+        });
+
+        // Save change color button click event
+        saveChangeColorBtn.addEventListener('click', function() {
+            // Find and update category color
+            const categoryIndex = categories.findIndex(cat => cat.name === selectedCategoryForColorChange);
+            if (categoryIndex !== -1) {
+                categories[categoryIndex].color = selectedColor;
+                saveCategories();
+                renderCategories();
+                
+                // If we're currently viewing this category, update the background color
+                if (currentCategory === selectedCategoryForColorChange) {
+                    currentColor = selectedColor;
+                    taskBackground.style.backgroundColor = colorMap[selectedColor];
+                }
+                
+                showNotification('Warna kategori berhasil diubah!');
+            }
+            
+            changeColorModal.style.display = 'none';
+        });
+
+        // Cancel delete button click event
+        cancelDeleteBtn.addEventListener('click', function() {
+            deleteModal.style.display = 'none';
+        });
+
+        // Confirm delete button click event
+        confirmDeleteBtn.addEventListener('click', function() {
+            // Remove category from array
+            categories = categories.filter(cat => cat.name !== selectedCategoryForDelete);
+            
+            // Remove tasks for this category
+            delete tasks[selectedCategoryForDelete];
+            
+            // Save changes
+            saveCategories();
+            saveTasks();
+            
+            // Re-render categories
+            renderCategories();
+            
+            // Close modal
+            deleteModal.style.display = 'none';
+            
+            showNotification(`Kategori "${selectedCategoryForDelete}" berhasil dihapus!`);
+        });
+
+        // Handle window resize
+        window.addEventListener('resize', function() {
+            if (categoryPage.style.display !== 'none') {
+                renderCategories();
+            }
+        });
+
+        // Initialize the app
+        initTasks();
+    </script>
+</body>
+</html>
